@@ -4,24 +4,26 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const recipeQuery = 'SELECT id, recipeName, imageurl, instructions FROM recipe ORDER BY RANDOM() LIMIT 1;';
-    const recipeResult = await db.query(recipeQuery);
-    const selectedRecipe = recipeResult.rows[0];
-    const ingredientsQuery = 'SELECT b.ingredientName FROM ingredient b INNER JOIN IngredientInRecipe c ON b.id = c.ingredientId WHERE c.recipeId = $1;';
-    const ingredientResult = await db.query(ingredientsQuery, [selectedRecipe.id]);
-    const ingredients = ingredientResult.rows.map( element => element.ingredientname);
+        const recipeQuery = 'SELECT id, recipeName, instructions FROM recipe ORDER BY RANDOM() LIMIT 1;';
+        const recipeResult = await db.query(recipeQuery);
+        const selectedRecipe = recipeResult.rows[0];
+
+        // If imageurl is null or undefined, set a default image URL
+        selectedRecipe.imageurl = selectedRecipe.imageurl || 'default-image-url.jpg';
+
+        const ingredientsQuery = 'SELECT b.ingredientName FROM ingredient b INNER JOIN IngredientInRecipe c ON b.id = c.ingredientId WHERE c.recipeId = $1;';
+        const ingredientResult = await db.query(ingredientsQuery, [selectedRecipe.id]);
+        const ingredients = ingredientResult.rows.map(element => element.ingredientname);
    
-    const randomRecipes = {
-        recipe: selectedRecipe,
-        ingredients:ingredients
-    };
-    res.json(randomRecipes);
-    }
-
-    catch(error) {
+        const randomRecipes = {
+            recipe: selectedRecipe,
+            ingredients: ingredients
+        };
+        res.json(randomRecipes);
+    } catch (error) {
         console.log(error);
-        res.status(500).json({error:'Internal server error.'});
+        res.status(500).json({ error: 'Internal server error.' });
     }
+});
 
-}); 
 module.exports = router;
